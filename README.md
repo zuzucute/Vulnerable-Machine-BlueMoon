@@ -201,22 +201,20 @@ The script executes a shell, giving access to the system.
 ```
 whoami
 ```
+It shown that the user is:
 
-```text
 jerry
-```
 
 ---
 
 ### 🧠 User Information
 
-```bash
+```
 id
 ```
 
-```text
 uid=1002(jerry) gid=1002(jerry) groups=1002(jerry),114(docker)
-```
+
 
 ### 🐳 Checking Available Docker Images
 
